@@ -3,7 +3,7 @@ variable "region" {
 }
 
 variable "compartment_ocid" {
-    default = "ocid1.compartment.oc1..aaaaaaaasaxgjviqpyubmkpj3pnh6khw4wtsc736bquokfqgduq6h7wubsta"
+    default = "ocid1.compartment.oc1..todorename"
 }
 
 variable "instance_image_ocid" {
