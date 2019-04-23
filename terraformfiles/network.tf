@@ -22,9 +22,10 @@ resource "oci_core_default_route_table" "tf-default-route-table" {
   }
 }
 
-resource "oci_core_default_security_list" "tf-default-security-list" {
-  manage_default_resource_id = "${oci_core_virtual_network.tfvcn.default_security_list_id}"
-  display_name               = "tf-default-security-list"
+resource "oci_core_security_list" "TFSecurityList" {
+  compartment_id = "${var.compartment_ocid}"
+  vcn_id         = "${oci_core_virtual_network.tfvcn.id}"
+  display_name   = "TFSecurityList"
 
   // allow outbound tcp traffic on all ports
   egress_security_rules {
@@ -39,18 +40,20 @@ resource "oci_core_default_security_list" "tf-default-security-list" {
     stateless   = true
 
     udp_options {
+      // These values correspond to the destination port range.
       "min" = 319
       "max" = 320
     }
   }
 
-  // allow inbound ssh traffic
+  // allow inbound ssh traffic from a specific port
   ingress_security_rules {
     protocol  = "6"         // tcp
     source    = "0.0.0.0/0"
     stateless = false
 
     tcp_options {
+      // These values correspond to the destination port range.
       "min" = 22
       "max" = 22
     }
@@ -98,7 +101,7 @@ resource "oci_core_default_security_list" "tf-default-security-list" {
     source    = "10.0.0.0/16"
     stateless = false
 
-    tcp_options {
+    udp_options {
       "min" = 111
       "max" = 111
     }
@@ -110,9 +113,22 @@ resource "oci_core_default_security_list" "tf-default-security-list" {
     source    = "10.0.0.0/16"
     stateless = false
 
-    tcp_options {
+    udp_options {
       "min" = 2048
       "max" = 2048
+    }
+  }
+  
+  // allow inbound nfs traffic
+  egress_security_rules {
+    destination = "0.0.0.0/0"
+    protocol    = "17"        // udp
+    stateless   = true
+
+    udp_options {
+      // These values correspond to the destination port range.
+      "min" = 111
+      "max" = 111
     }
   }
 }
@@ -123,7 +139,7 @@ resource "oci_core_subnet" "public01" {
   dns_label = "public01"
   vcn_id = "${oci_core_virtual_network.tfvcn.id}"
   prohibit_public_ip_on_vnic = false
-  security_list_ids = ["${oci_core_virtual_network.tfvcn.default_security_list_id}"]
+  security_list_ids = ["${oci_core_security_list.TFSecurityList.id}"]
   route_table_id = "${oci_core_virtual_network.tfvcn.default_route_table_id}"
   dhcp_options_id = "${oci_core_virtual_network.tfvcn.default_dhcp_options_id}"
   compartment_id = "${var.compartment_ocid}"
